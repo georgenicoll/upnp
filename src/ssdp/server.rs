@@ -1,5 +1,6 @@
 use std::io;
 use std::net::SocketAddr;
+use std::sync::mpsc::Sender;
 use std::time::Duration;
 
 use crate::net::udp::UdpTransport;
@@ -22,8 +23,17 @@ fn should_reply(search_target: &str, expected_target: &str) -> bool {
 }
 
 pub fn respond_once(config: &ResponderConfig) -> io::Result<bool> {
+    respond_once_inner(config, None)
+}
+
+fn respond_once_inner(config: &ResponderConfig, ready: Option<Sender<()>>) -> io::Result<bool> {
     let transport = UdpTransport::bind(config.bind_addr, "ssdp-server")?;
     transport.set_read_timeout(config.read_timeout)?;
+
+    if let Some(ready) = ready {
+        let _ = ready.send(());
+    }
+
     let mut buffer = [0u8; 4096];
     let (bytes, peer) = transport.recv_from(&mut buffer)?;
 
@@ -57,7 +67,8 @@ pub fn respond_once(config: &ResponderConfig) -> io::Result<bool> {
 
 #[cfg(test)]
 mod tests {
-    use std::net::{SocketAddr, TcpListener};
+    use std::net::{SocketAddr, UdpSocket};
+    use std::sync::mpsc::channel;
     use std::thread;
     use std::time::Duration;
 
@@ -65,9 +76,9 @@ mod tests {
     use crate::ssdp::client::discover_once;
 
     fn reserve_ephemeral_port() -> io::Result<u16> {
-        let listener = TcpListener::bind("127.0.0.1:0")?;
-        let port = listener.local_addr()?.port();
-        drop(listener);
+        let socket = UdpSocket::bind("127.0.0.1:0")?;
+        let port = socket.local_addr()?.port();
+        drop(socket);
         Ok(port)
     }
 
@@ -88,9 +99,10 @@ mod tests {
         };
 
         let server_cfg = config.clone();
-        let server = thread::spawn(move || respond_once(&server_cfg));
+        let (ready_tx, ready_rx) = channel();
+        let server = thread::spawn(move || respond_once_inner(&server_cfg, Some(ready_tx)));
 
-        thread::sleep(Duration::from_millis(30));
+        ready_rx.recv().expect("server should signal readiness");
 
         let responses = discover_once(
             "127.0.0.1:0".parse().expect("valid client bind address"),
