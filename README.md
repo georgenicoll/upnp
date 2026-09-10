@@ -51,4 +51,26 @@ Helper aliases are defined in `.cargo/config.toml`:
 cargo fmt-check
 cargo lint
 cargo qa
+cargo run-checks
+```
+
+`cargo run-checks` uses a small Rust helper binary in `src/bin/run-checks.rs`.
+
+By default it runs required checks (`fmt`, `clippy`, `check`, `test`) and skips `audit`/`deny` if those subcommands are not installed.
+
+Strict mode (fail if `audit` or `deny` is missing):
+
+```powershell
+$env:RUN_CHECKS_STRICT = "1"
+cargo run-checks
+```
+
+Script entrypoints (same checks):
+
+```powershell
+./scripts/run-checks.ps1
+```
+
+```bash
+./scripts/run-checks.sh
 ```
