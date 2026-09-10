@@ -28,21 +28,35 @@ Approach:
 ## Next technical milestones (initial backlog)
 
 ### Milestone 1: Minimal networking foundation
-- [ ] Add a tiny UDP networking layer shared by client and server modules.
-- [ ] Add config constants for SSDP multicast address/port.
-- [ ] Add structured logging for packet send/receive events.
-- [ ] Add smoke test(s) for message parsing helpers.
+- [x] Add a tiny UDP networking layer shared by client and server modules.
+- [x] Add config constants for SSDP multicast address/port.
+- [x] Add structured logging for packet send/receive events.
+- [x] Add smoke test(s) for message parsing helpers.
 
 ### Milestone 2: SSDP discovery (simplest UPnP slice)
-- [ ] Implement a minimal SSDP M-SEARCH sender (client).
-- [ ] Implement a minimal SSDP responder (server) for one fake device/service.
-- [ ] Parse essential SSDP headers needed for request/response flow.
-- [ ] Verify discovery works on local network loop (or local simulation if multicast is restricted).
+- [x] Implement a minimal SSDP M-SEARCH sender (client).
+- [x] Implement a minimal SSDP responder (server) for one fake device/service.
+- [x] Parse essential SSDP headers needed for request/response flow.
+- [x] Verify discovery works on local network loop (or local simulation if multicast is restricted).
+
+Milestone 2 implementation notes:
+- `src/ssdp/client.rs`: send one M-SEARCH and collect valid SSDP HTTP 200 responses.
+- `src/ssdp/server.rs`: receive one request and reply to valid M-SEARCH packets.
+- `src/ssdp/message.rs`: build wire-format M-SEARCH and 200 OK responses.
+- `src/bin/ssdp-client.rs`: runnable discovery client (supports env-var overrides).
+- `src/bin/ssdp-server.rs`: runnable single-request responder (supports env-var overrides).
+- Local simulation is validated by the loopback test `client_discovers_local_responder`.
 
 ### Milestone 3: Device description endpoint
-- [ ] Expose a minimal HTTP endpoint that serves a UPnP device description XML.
-- [ ] Link SSDP LOCATION header to that endpoint.
-- [ ] Validate client can fetch and parse basic XML fields.
+- [x] Expose a minimal HTTP endpoint that serves a UPnP device description XML.
+- [x] Link SSDP LOCATION header to that endpoint.
+- [x] Validate client can fetch and parse basic XML fields.
+
+Milestone 3 implementation notes:
+- `src/http/device_description.rs`: one-shot HTTP endpoint and XML builder/parser.
+- `src/http/client.rs`: fetch a device description over plain HTTP and extract fields.
+- `src/bin/device-description-server.rs`: runnable HTTP endpoint for local demo use.
+- SSDP LOCATION already points at `http://127.0.0.1:8000/device.xml` by default.
 
 ### Milestone 4: Basic control action
 - [ ] Add one simple SOAP action endpoint on server.
@@ -64,3 +78,6 @@ Approach:
 
 ## Change log for this plan
 - 2026-09-10: Initial version created with bootstrap status and first UPnP milestones.
+- 2026-09-10: Milestone 1 implemented (shared UDP transport, SSDP constants, packet logging hooks, parser smoke tests).
+- 2026-09-10: Milestone 2 implemented (minimal M-SEARCH client, one-shot responder, loopback discovery validation).
+- 2026-09-10: Milestone 3 implemented (one-shot HTTP device description endpoint, HTTP client fetch/parser, LOCATION wiring).

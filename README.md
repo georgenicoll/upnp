@@ -18,6 +18,57 @@ cargo build
 cargo run
 ```
 
+3. Configure log verbosity (optional):
+
+```powershell
+$env:RUST_LOG = "info,monkeynuthead_upnp=debug"
+cargo run
+```
+
+## Milestone 2 Discovery Commands
+
+Run one-shot responder (default bind is `0.0.0.0:1900`):
+
+```powershell
+cargo run --bin ssdp-server
+```
+
+Run discovery client (default target is multicast `239.255.255.250:1900`):
+
+```powershell
+cargo run --bin ssdp-client
+```
+
+Local loopback simulation (useful when multicast is restricted):
+
+Terminal 1:
+
+```powershell
+$env:SSDP_BIND = "127.0.0.1:1901"
+cargo run --bin ssdp-server
+```
+
+Terminal 2:
+
+```powershell
+$env:SSDP_TARGET = "127.0.0.1:1901"
+$env:SSDP_BIND = "127.0.0.1:0"
+$env:SSDP_ST = "upnp:rootdevice"
+cargo run --bin ssdp-client
+```
+
+## Milestone 3 Device Description
+
+Run the HTTP description endpoint:
+
+```powershell
+cargo run --bin device-description-server
+```
+
+The default SSDP `LOCATION` header already points at `http://127.0.0.1:8000/device.xml`, so the discovery responder and the HTTP endpoint fit together out of the box.
+
+If you want to change the local demo target, set `HTTP_BIND` and `SSDP_LOCATION` together before running the binaries.
+
 ## Quality and Security Tooling
 
 This repository includes:
